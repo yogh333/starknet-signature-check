@@ -25,7 +25,8 @@ function hexZeroPad(hash, length) {
 }
 
 const main = async () => {
-  const PATH = "/2645'/579218131'/1148870696'/0'/0'/0";
+  //const PATH = "/2645'/579218131'/1148870696'/0'/0'/0";
+  const PATH = "/2645'/579218131'/0'/0";
   const MESSAGE =
     "Lorem ipsum dolor sit amet, consectetur adipiscing elit. 123";
   const ACCOUNT_ADDRESS =
@@ -39,19 +40,23 @@ const main = async () => {
   const app = new Eth(transport);
 
   try {
+    const { publicKey } = await app.getAddress(PATH);
+    console.log("Ethereum pub key =" + publicKey);
+
     const res = await app.starkGetPublicKey(PATH);
     const starkPub = `0x${res.slice(1, 1 + 32).toString("hex")}`;
 
     console.log("starkPub HEX", starkPub);
     console.log("starkPub DEC", BigNumber.from(starkPub).toString());
 
-    const { result } = await defaultProvider.callContract({
+    /*const { result } = await defaultProvider.callContract({
       contractAddress: ACCOUNT_ADDRESS,
       entrypoint: "get_signer",
       calldata: [],
     });
 
     console.log("signer   HEX", result[0]);
+    */
 
     const msgHash = hexZeroPad("0x" + MESSAGE_HASH.toString("hex"), 32);
     console.log("msgHash = " + msgHash);
@@ -66,8 +71,8 @@ const main = async () => {
     const hash = BigNumber.from(msgHash);
 
     console.log("hash BN= " + hash);
-    console.log("r BN= " + r);
-    console.log("s BN= " + s);
+    console.log("r BN= " + r.toString());
+    console.log("s BN= " + s.toString());
 
     /* check signature locally */
     console.log(res);
@@ -75,13 +80,14 @@ const main = async () => {
     console.log(ec.verify(kp, msgHash, [r.toString(), s.toString()]));
     /* end of local check */
 
+    /*
     const isValid = await defaultProvider.callContract({
       contractAddress: ACCOUNT_ADDRESS,
       entrypoint: "is_valid_signature",
       calldata: [hash.toString(), "2", r.toString(), s.toString()],
     });
-
     console.log(isValid);
+    */
   } catch (error) {
     console.log(error);
   }

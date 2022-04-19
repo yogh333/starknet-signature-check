@@ -13,7 +13,7 @@ const { defaultProvider, hash, ec } = require("starknet");
 // (3) Put the account address address in ACCOUNT_ADDRESS
 
 const main = async () => {
-  const PATH = "m/2645'/579218131'/0'/0";
+  const PATH = "m/2645'/579218131'/0'/0'";
   const MESSAGE =
     "Lorem ipsum dolor sit amet, consectetur adipiscing elit. 123";
   const ACCOUNT_ADDRESS =
@@ -34,12 +34,12 @@ const main = async () => {
     console.log("starkPub DEC", BigNumber.from(starkPub).toString());
 
     /* get signer from account contract */
-    const { result } = await defaultProvider.callContract({
+    /*const { result } = await defaultProvider.callContract({
       contractAddress: ACCOUNT_ADDRESS,
       entrypoint: "get_signer",
       calldata: [],
     });
-    console.log("signer   HEX", result[0]);
+    console.log("signer   HEX", result[0]);*/
 
     const signature = await app.signFelt(PATH, Buffer.from(MESSAGE_HASH));
     console.log(signature);
@@ -50,26 +50,36 @@ const main = async () => {
     const s = BigNumber.from(signature.s);
     const hash = BigNumber.from(MESSAGE_HASH);
 
-    console.log("hash = " + hash);
-    console.log("r BN= " + r);
-    console.log("s BN= " + s);
+    console.log("hash BN= " + hash);
+    console.log("r BN= " + r.toString());
+    console.log("s BN= " + s.toString());
 
     /* check signature locally */
-    const kp = ec.getKeyPairFromPublicKey(res.publicKey);
+    const kp = ec.getKeyPairFromPublicKey("0x" + res.publicKey.toString("hex"));
+
+    const kp_pub = ec.getStarkKey(kp);
+    console.log("kp_pub", kp_pub);
+
     console.log(
       ec.verify(kp, "0x" + MESSAGE_HASH.toString("hex"), [
         r.toString(),
         s.toString(),
       ])
     );
+    console.log(
+      ec.verify(kp, "0x" + MESSAGE_HASH.toString("hex"), [
+        "0x" + signature.r.toString("hex"),
+        "0x" + signature.s.toString("hex"),
+      ])
+    );
 
     /* check signature on-chain */
-    const isValid = await defaultProvider.callContract({
+    /*const isValid = await defaultProvider.callContract({
       contractAddress: ACCOUNT_ADDRESS,
       entrypoint: "is_valid_signature",
       calldata: [hash.toString(), "2", r.toString(), s.toString()],
     });
-    console.log(isValid);
+    console.log(isValid);*/
   } catch (error) {
     console.log(error);
   }
