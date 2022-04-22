@@ -16,6 +16,7 @@ const main = async () => {
   const PATH = "m/2645'/579218131'/0'/0'";
   const MESSAGE =
     "Lorem ipsum dolor sit amet, consectetur adipiscing elit. 123";
+
   const ACCOUNT_ADDRESS =
     "0x01bb7aa6031083a8dc0c58aced8918daf5dba82f06850d3daa881b8607ab3f07";
 
@@ -41,7 +42,7 @@ const main = async () => {
     });
     console.log("signer   HEX", result[0]);*/
 
-    const signature = await app.signFelt(PATH, Buffer.from(MESSAGE_HASH));
+    const signature = await app.signFelt(PATH, MESSAGE_HASH);
     console.log(signature);
     console.log(signature.r.length, signature.r.toString("hex"));
     console.log(signature.s.length, signature.s.toString("hex"));
@@ -64,12 +65,6 @@ const main = async () => {
       ec.verify(kp, "0x" + MESSAGE_HASH.toString("hex"), [
         r.toString(),
         s.toString(),
-      ])
-    );
-    console.log(
-      ec.verify(kp, "0x" + MESSAGE_HASH.toString("hex"), [
-        "0x" + signature.r.toString("hex"),
-        "0x" + signature.s.toString("hex"),
       ])
     );
 
