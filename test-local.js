@@ -1,7 +1,4 @@
-const TransportNodeHid = require("@ledgerhq/hw-transport-node-hid").default;
-const StarkwareApp = require("@zondax/ledger-starkware-app").default;
 const { BigNumber } = require("@ethersproject/bignumber");
-
 const { defaultProvider, hash, ec, stark } = require("starknet");
 
 // deploy a contract
@@ -23,12 +20,12 @@ const main = async () => {
 
   const MESSAGE =
     "Lorem ipsum dolor sit amet, consectetur adipiscing elit. 123";
+  const MESSAGE_HASH = hash.starknetKeccak(MESSAGE).toString("hex");
+
   const ACCOUNT_ADDRESS =
     "0x0537d40f5344592d5556af59ec7b16a1a4ff6e155c055a983a71d13b0ab3e81a";
 
-  const MESSAGE_HASH = hash.starknetKeccak(MESSAGE).toBuffer("be", 32);
-
-  console.log("MESSAGE HASH = " + MESSAGE_HASH.toString("hex"));
+  console.log("HASH = " + MESSAGE_HASH);
 
   try {
     console.log("starkPub HEX", starkKeyPub);
@@ -42,22 +39,18 @@ const main = async () => {
 
     console.log("signer   HEX", result[0]);
 
-    const signature = ec.sign(
-      starkKeyPair,
-      "0x" + MESSAGE_HASH.toString("hex")
-    );
+    const signature = ec.sign(starkKeyPair, MESSAGE_HASH);
 
     console.log(signature);
 
     /* check signature locally */
-    console.log(
-      ec.verify(starkKeyPair, "0x" + MESSAGE_HASH.toString("hex"), signature)
-    );
+    console.log(ec.verify(starkKeyPair, MESSAGE_HASH, signature));
     /* end of local check */
 
     const r = BigNumber.from(signature[0]);
     const s = BigNumber.from(signature[1]);
-    const hash = BigNumber.from(MESSAGE_HASH);
+
+    const hash = BigNumber.from("0x" + MESSAGE_HASH);
 
     console.log("hash = " + hash);
 

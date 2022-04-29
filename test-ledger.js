@@ -24,31 +24,40 @@ function hexZeroPad(hash, length) {
   return value;
 }
 
+function fixMessage(msg) {
+  const pureHex = msg.replace(/^0x0*/, "");
+
+  if (pureHex.length <= 62) {
+    // In this case, pureHex should not be transformed, as the byteLength() is at most 31,
+    // so delta < 0 (see _truncateToN).
+    return pureHex;
+  }
+  //assert(pureHex.length === 63);
+  // In this case delta will be 4 so we perform a shift-left of 4 bits by adding a ZERO_BN.
+  return `${pureHex}0`;
+}
+
 const main = async () => {
-  //const PATH = "/2645'/579218131'/1148870696'/0'/0'/0";
-  const PATH = "/2645'/579218131'/0'/0";
+  const PATH = "/2645'/579218131'/0'/0'/0";
   const MESSAGE =
     "Lorem ipsum dolor sit amet, consectetur adipiscing elit. 123";
-  const ACCOUNT_ADDRESS =
-    "0x065587b4410f4b7e68467b363a8fb87b19330456bc315eb76c2ee930d53ea269";
 
-  const MESSAGE_HASH = hash.starknetKeccak(MESSAGE).toBuffer("be", 32);
+  const MESSAGE_HASH = hash.starknetKeccak(MESSAGE).toString("hex");
 
-  console.log("MESSAGE HASH = " + MESSAGE_HASH.toString("hex"));
+  console.log("HASH = " + MESSAGE_HASH.toString("hex"));
 
   const transport = await TransportNodeHid.create();
   const app = new Eth(transport);
 
   try {
-    const { publicKey } = await app.getAddress(PATH);
-    console.log("Ethereum pub key =" + publicKey);
-
     const res = await app.starkGetPublicKey(PATH);
     const starkPub = `0x${res.slice(1, 1 + 32).toString("hex")}`;
 
     console.log("starkPub HEX", starkPub);
     console.log("starkPub DEC", BigNumber.from(starkPub).toString());
 
+    const ACCOUNT_ADDRESS =
+      "0x065587b4410f4b7e68467b363a8fb87b19330456bc315eb76c2ee930d53ea269";
     /*const { result } = await defaultProvider.callContract({
       contractAddress: ACCOUNT_ADDRESS,
       entrypoint: "get_signer",
@@ -58,29 +67,25 @@ const main = async () => {
     console.log("signer   HEX", result[0]);
     */
 
-    const msgHash = hexZeroPad("0x" + MESSAGE_HASH.toString("hex"), 32);
+    const msgHash = fixMessage(MESSAGE_HASH);
     console.log("msgHash = " + msgHash);
     const signature = await app.starkUnsafeSign(PATH, msgHash);
 
     console.log(signature);
-    console.log(signature.r.length, signature.r);
-    console.log(signature.s.length, signature.s);
 
     const r = BigNumber.from("0x" + signature.r);
     const s = BigNumber.from("0x" + signature.s);
-    const hash = BigNumber.from(msgHash);
 
-    console.log("hash BN= " + hash);
     console.log("r BN= " + r.toString());
     console.log("s BN= " + s.toString());
 
     /* check signature locally */
-    console.log(res);
     const kp = ec.getKeyPairFromPublicKey(res);
-    console.log(ec.verify(kp, msgHash, [r.toString(), s.toString()]));
+    console.log(ec.verify(kp, MESSAGE_HASH, [r.toString(), s.toString()]));
     /* end of local check */
 
     /*
+    const hash = BigNumber.from("0x" + msgHash);
     const isValid = await defaultProvider.callContract({
       contractAddress: ACCOUNT_ADDRESS,
       entrypoint: "is_valid_signature",
